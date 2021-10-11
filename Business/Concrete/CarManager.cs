@@ -1,9 +1,13 @@
 ﻿using Business.Abstract;
 using Business.Constants;
+using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Validation;
+using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities;
 using Entities.DTOs;
+using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,20 +24,11 @@ namespace Business.Concrete
         {
             _carDal = carDal;
         }
-
+        [ValidationAspect(typeof(CarValidator))]
         public IResult Add(Car car)
         {
-            if (car.Description.Length<2)
-            {
-                //throw new Exception("2 Karakterden az olamaz");
-                return new ErrorResult(Messages.CarNameCannotBeLessTwo);
-            }
-            if (car.DailyPrice<=0)
-            {
-                //throw new Exception("Günlük kiralama fiyatı 0'dan Büyük olmalı");
-                return new ErrorResult(Messages.CarPriceCannotBeLessThanZero);
-            }
-
+            
+            //ValidationTool.Validate(new CarValidator(),car);
             _carDal.Add(car);
             return new SuccessResult(Messages.EntityAdded);
         }
@@ -83,7 +78,7 @@ namespace Business.Concrete
         {
             return new SuccessDataResult<List<Car>>(_carDal.GetAll(c => c.ColorId == id), Messages.EntityListed);
         }
-
+        [ValidationAspect(typeof(CarValidator))]
         public IResult Update(Car car)
         {
             _carDal.Update(car);
