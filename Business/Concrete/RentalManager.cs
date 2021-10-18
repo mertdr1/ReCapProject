@@ -2,6 +2,7 @@
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
 using Core.Aspects.Autofac.Validation;
+using Core.Utilities.Business;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
 using Entities;
@@ -24,26 +25,28 @@ namespace Business.Concrete
         [ValidationAspect(typeof(RentalValidator))]
         public IResult Add(Rental rental)
         {
-            var result = carIsRented(rental.CarId);
-            if (result == true)
+            IResult result = BusinessRules.Run(
+                CarIsRented(rental.CarId)
+                );
+            if (result!=null)
             {
-                return new ErrorResult(Messages.CanNotBeRented);
+                return result;
             }
+            
             _rentalDal.Add(rental);
             return new SuccessResult(Messages.EntityAdded);
         }
+      
 
-        private bool carIsRented(int carId)
+        private IResult CarIsRented(int carId)
         {
          
             var rentalCar = _rentalDal.GetAll(r => r.CarId == carId && r.ReturnDate == null).FirstOrDefault();
             if (rentalCar!=null)
             {
-                return true;
+                return new ErrorResult(Messages.CanNotBeRented);
             }
-            else {
-                return false;
-            }
+            return new SuccessResult();
            
         }
 
